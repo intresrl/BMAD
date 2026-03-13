@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Food Cost SaaS — Design Directions</title>
+<style>
+  /* ========== RESET & BASE ========== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg-base: #111827;
+    --bg-surface: #1F2937;
+    --bg-elevated: #374151;
+    --color-primary: #F9FAFB;
+    --color-secondary: #9CA3AF;
+    --color-accent: #22C55E;
+    --color-accent-hover: #16A34A;
+    --color-success: #22C55E;
+    --color-warning: #F59E0B;
+    --color-danger: #EF4444;
+    --color-border: #374151;
+    --color-muted: #6B7280;
+    --font: 'Inter', system-ui, sans-serif;
+  }
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  body { background: #0B1120; font-family: var(--font); color: var(--color-primary); }
+
+  /* ========== NAV TABS ========== */
+  .tabs-bar {
+    position: sticky; top: 0; z-index: 100;
+    background: #0B1120; border-bottom: 1px solid var(--color-border);
+    display: flex; align-items: center; gap: 4px;
+    padding: 12px 24px; overflow-x: auto;
+  }
+  .tabs-bar h1 { font-size: 14px; font-weight: 600; color: var(--color-secondary); white-space: nowrap; margin-right: 16px; }
+  .tab-btn {
+    padding: 6px 14px; border-radius: 6px; border: 1px solid var(--color-border);
+    background: transparent; color: var(--color-secondary); font-family: var(--font);
+    font-size: 13px; cursor: pointer; white-space: nowrap; transition: all .15s;
+  }
+  .tab-btn:hover { background: var(--bg-surface); color: var(--color-primary); }
+  .tab-btn.active { background: var(--color-accent); color: #111827; border-color: var(--color-accent); font-weight: 600; }
+
+  /* ========== SECTIONS ========== */
+  .direction { display: none; padding: 32px 24px; max-width: 1200px; margin: 0 auto; }
+  .direction.active { display: block; }
+  .direction-header { margin-bottom: 28px; }
+  .direction-header h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .direction-header p { color: var(--color-secondary); font-size: 14px; max-width: 600px; line-height: 1.6; }
+  .direction-header .tag {
+    display: inline-block; margin-top: 10px; padding: 3px 10px; border-radius: 99px;
+    font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase;
+    background: var(--bg-elevated); color: var(--color-secondary);
+  }
+
+  /* ========== MOCKUP FRAME ========== */
+  .mockup-frame {
+    background: var(--bg-base); border: 1px solid var(--color-border);
+    border-radius: 12px; overflow: hidden;
+  }
+  .mockup-mobile { width: 375px; min-height: 700px; }
+  .mockup-desktop { width: 100%; min-height: 600px; }
+  .mockup-row { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 24px; }
+
+  /* ========== SHARED COMPONENTS ========== */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: 99px; font-size: 12px; font-weight: 600;
+  }
+  .badge-success { background: rgba(34,197,94,.15); color: var(--color-success); }
+  .badge-warning { background: rgba(245,158,11,.15); color: var(--color-warning); }
+  .badge-danger  { background: rgba(239,68,68,.15);  color: var(--color-danger);  }
+  .food-cost-bar { height: 4px; border-radius: 2px; background: var(--bg-elevated); overflow: hidden; }
+  .food-cost-bar-fill { height: 100%; border-radius: 2px; }
+
+  /* ========== DIRECTION 1: "Comando" — Dashboard card-centric ========== */
+  .d1-topbar {
+    height: 56px; background: var(--bg-surface); border-bottom: 1px solid var(--color-border);
+    display: flex; align-items: center; padding: 0 16px; gap: 12px;
+  }
+  .d1-topbar .logo { font-size: 16px; font-weight: 700; color: var(--color-accent); }
+  .d1-topbar .spacer { flex: 1; }
+  .d1-topbar .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--bg-elevated); display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 600; color: var(--color-secondary);
+  }
+  .d1-content { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .d1-greeting { font-size: 22px; font-weight: 700; }
+  .d1-greeting span { color: var(--color-accent); }
+  .d1-stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .d1-stat-card {
+    background: var(--bg-surface); border: 1px solid var(--color-border);
+    border-radius: 10px; padding: 14px;
+  }
+  .d1-stat-card .label { font-size: 11px; color: var(--color-secondary); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
+  .d1-stat-card .value { font-size: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .d1-stat-card .sub { font-size: 11px; color: var(--color-secondary); margin-top: 4px; }
+  .d1-section-title { font-size: 13px; font-weight: 600; color: var(--color-secondary); text-transform: uppercase; letter-spacing: .05em; margin-top: 4px; }
+  .d1-recipe-card {
+    background: var(--bg-surface); border: 1px solid var(--color-border);
+    border-radius: 10px; padding: 14px; display: flex; align-items: center; gap: 12px;
+  }
+  .d1-recipe-icon {
+    width: 40px; height: 40px; border-radius: 8px; background: var(--bg-elevated);
+    display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;
+  }
+  .d1-recipe-info { flex: 1; min-width: 0; }
+  .d1-recipe-info .name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .d1-recipe-info .meta { font-size: 12px; color: var(--color-secondary); margin-top: 2px; }
+  .d1-bottomnav {
+    position: relative; background: var(--bg-surface); border-top: 1px solid var(--color-border);
+    display: flex; align-items: center; height: 64px; padding: 0 8px;
+  }
+  .d1-nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px; font-size: 10px; color: var(--color-muted); cursor: pointer; padding: 8px 0;
+    transition: color .15s;
+  }
+  .d1-nav-item.active { color: var(--color-accent); }
+  .d1-nav-item svg { width: 20px; height: 20px; }
+  .d1-fab {
+    width: 48px; height: 48px; border-radius: 50%; background: var(--color-accent);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 14px rgba(34,197,94,.4); margin: 0 8px;
+  }
+  .d1-fab svg { width: 22px; height: 22px; color: #111827; }
+
+  /* ========== DIRECTION 2: "Linea" — Lista densa tabellare ========== */
+  .d2-sidebar {
+    width: 200px; background: var(--bg-surface); border-right: 1px solid var(--color-border);
+    padding: 20px 0; display: flex; flex-direction: column; flex-shrink: 0;
+  }
+  .d2-sidebar .logo { padding: 0 16px 20px; font-size: 15px; font-weight: 700; color: var(--color-accent); }
+  .d2-nav-item {
+    padding: 8px 16px; font-size: 13px; color: var(--color-secondary); cursor: pointer;
+    display: flex; align-items: center; gap: 10px; transition: all .15s; border-left: 2px solid transparent;
+  }
+  .d2-nav-item.active { color: var(--color-primary); background: rgba(34,197,94,.08); border-left-color: var(--color-accent); }
+  .d2-nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+  .d2-main { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+  .d2-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--color-border); }
+  .d2-header h2 { font-size: 18px; font-weight: 600; }
+  .d2-header p { font-size: 12px; color: var(--color-secondary); margin-top: 2px; }
+  .d2-filters { padding: 12px 24px; display: flex; gap: 8px; border-bottom: 1px solid var(--color-border); }
+  .d2-chip {
+    padding: 4px 12px; border-radius: 6px; font-size: 12px; border: 1px solid var(--color-border);
+    background: transparent; color: var(--color-secondary); cursor: pointer;
+  }
+  .d2-chip.active { background: var(--bg-elevated); color: var(--color-primary); border-color: var(--color-secondary); }
+  .d2-table { padding: 0 24px; }
+  .d2-table-header {
+    display: grid; grid-template-columns: 1fr 80px 80px 80px;
+    padding: 10px 0; border-bottom: 1px solid var(--color-border);
+    font-size: 11px; color: var(--color-secondary); font-weight: 500; text-transform: uppercase; letter-spacing: .04em;
+  }
+  .d2-table-row {
+    display: grid; grid-template-columns: 1fr 80px 80px 80px;
+    padding: 12px 0; border-bottom: 1px solid rgba(55,65,81,.5);
+    font-size: 13px; align-items: center;
+  }
+  .d2-table-row:hover { background: rgba(31,41,55,.5); margin: 0 -24px; padding-left: 24px; padding-right: 24px; }
+  .d2-table-row .name { font-weight: 500; }
+  .d2-table-row .meta { font-size: 11px; color: var(--color-secondary); }
+  .d2-table-row .num { font-variant-numeric: tabular-nums; text-align: right; }
+
+  /* ========== DIRECTION 3: "Schede" — Card magazine stile ========== */
+  .d3-topbar {
+    height: 60px; background: var(--bg-base); border-bottom: 1px solid var(--color-border);
+    display: flex; align-items: center; justify-content: space-between; padding: 0 20px;
+  }
+  .d3-topbar .logo { font-size: 17px; font-weight: 800; letter-spacing: -.02em; color: var(--color-accent); }
+  .d3-topbar .search {
+    flex: 1; max-width: 300px; margin: 0 24px; background: var(--bg-surface);
+    border: 1px solid var(--color-border); border-radius: 8px;
+    padding: 7px 12px; font-size: 13px; color: var(--color-secondary); font-family: var(--font);
+  }
+  .d3-content { display: flex; gap: 0; height: calc(600px - 60px); }
+  .d3-main { flex: 1; padding: 20px 24px; overflow-y: auto; }
+  .d3-panel { width: 280px; background: var(--bg-surface); border-left: 1px solid var(--color-border); padding: 20px; overflow-y: auto; }
+  .d3-kpi-row { display: flex; gap: 12px; margin-bottom: 20px; }
+  .d3-kpi {
+    flex: 1; background: var(--bg-surface); border: 1px solid var(--color-border);
+    border-radius: 10px; padding: 14px;
+  }
+  .d3-kpi .kpi-label { font-size: 11px; color: var(--color-secondary); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 8px; }
+  .d3-kpi .kpi-value { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+  .d3-kpi .kpi-sub { font-size: 11px; color: var(--color-secondary); margin-top: 6px; }
+  .d3-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .d3-card {
+    background: var(--bg-surface); border: 1px solid var(--color-border);
+    border-radius: 10px; padding: 16px; cursor: pointer; transition: border-color .15s;
+  }
+  .d3-card:hover { border-color: var(--color-secondary); }
+  .d3-card .card-emoji { font-size: 24px; margin-bottom: 10px; display: block; }
+  .d3-card .card-name { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+  .d3-card .card-sub { font-size: 11px; color: var(--color-secondary); margin-bottom: 10px; }
+  .d3-panel h3 { font-size: 14px; font-weight: 600; margin-bottom: 14px; }
+  .d3-alert-item { display: flex; gap: 10px; margin-bottom: 12px; align-items: flex-start; }
+  .d3-alert-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+  .d3-alert-text { font-size: 12px; line-height: 1.5; }
+  .d3-alert-text strong { font-weight: 600; display: block; }
+  .d3-alert-text span { color: var(--color-secondary); }
+
+  /* ========== DIRECTION 4: "Scan" — OCR-first flow ========== */
+  .d4-scan-page { display: flex; flex-direction: column; height: 700px; background: var(--bg-base); }
+  .d4-scan-header {
+    height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .d4-scan-header .back { color: var(--color-accent); font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+  .d4-scan-header h3 { font-size: 15px; font-weight: 600; }
+  .d4-scan-header .skip { font-size: 13px; color: var(--color-secondary); cursor: pointer; }
+  .d4-viewfinder {
+    margin: 16px; flex: 1; max-height: 280px; background: #000;
+    border-radius: 12px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;
+  }
+  .d4-viewfinder-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(rgba(0,0,0,.5) 0%, transparent 20%, transparent 80%, rgba(0,0,0,.5) 100%);
+  }
+  .d4-viewfinder-frame {
+    position: absolute; width: 280px; height: 180px;
+    border: 2px solid var(--color-accent); border-radius: 8px;
+  }
+  .d4-viewfinder-frame::before, .d4-viewfinder-frame::after {
+    content: ''; position: absolute; width: 20px; height: 20px; border-color: var(--color-accent); border-style: solid;
+  }
+  .d4-viewfinder-frame::before { top: -2px; left: -2px; border-width: 3px 0 0 3px; border-radius: 4px 0 0 0; }
+  .d4-viewfinder-hint { font-size: 13px; color: rgba(255,255,255,.7); }
+  .d4-results { padding: 0 16px 16px; flex: 1; overflow-y: auto; }
+  .d4-results-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; }
+  .d4-results-header h4 { font-size: 14px; font-weight: 600; }
+  .d4-results-header .count { font-size: 12px; color: var(--color-secondary); }
+  .d4-item {
+    background: var(--bg-surface); border: 1px solid var(--color-border); border-radius: 8px;
+    padding: 12px; margin-bottom: 8px; display: grid;
+    grid-template-columns: 1fr auto auto auto; gap: 8px; align-items: center;
+  }
+  .d4-item.warn { border-color: var(--color-warning); }
+  .d4-item.error { border-left: 3px solid var(--color-danger); border-color: var(--color-danger); }
+  .d4-item .item-name { font-size: 13px; font-weight: 500; }
+  .d4-item .item-meta { font-size: 11px; color: var(--color-secondary); margin-top: 2px; }
+  .d4-item .item-qty { font-size: 13px; font-variant-numeric: tabular-nums; }
+  .d4-item .item-price { font-size: 13px; font-variant-numeric: tabular-nums; font-weight: 500; }
+  .d4-item .item-delta { font-size: 11px; font-weight: 600; }
+  .d4-cta {
+    margin: 0 16px 16px; padding: 14px; border-radius: 10px; background: var(--color-accent);
+    color: #111827; font-family: var(--font); font-size: 14px; font-weight: 600;
+    border: none; cursor: pointer; width: calc(100% - 32px); display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+
+  /* ========== DIRECTION 5: "Report" — Analytics-first ========== */
+  .d5-layout { display: flex; height: 600px; }
+  .d5-sidebar {
+    width: 64px; background: var(--bg-surface); border-right: 1px solid var(--color-border);
+    display: flex; flex-direction: column; align-items: center; padding: 16px 0; gap: 8px;
+  }
+  .d5-icon-btn {
+    width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; color: var(--color-muted); transition: all .15s;
+  }
+  .d5-icon-btn.active { background: rgba(34,197,94,.15); color: var(--color-accent); }
+  .d5-icon-btn svg { width: 18px; height: 18px; }
+  .d5-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .d5-topbar {
+    height: 52px; border-bottom: 1px solid var(--color-border); display: flex; align-items: center;
+    justify-content: space-between; padding: 0 20px;
+  }
+  .d5-topbar h2 { font-size: 15px; font-weight: 600; }
+  .d5-topbar .period {
+    font-size: 12px; color: var(--color-secondary); background: var(--bg-elevated);
+    padding: 4px 10px; border-radius: 6px; display: flex; align-items: center; gap: 4px;
+  }
+  .d5-body { flex: 1; padding: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; grid-template-rows: auto auto; gap: 12px; }
+  .d5-card {
+    background: var(--bg-surface); border: 1px solid var(--color-border); border-radius: 10px; padding: 16px;
+  }
+  .d5-card.span2 { grid-column: span 2; }
+  .d5-card.span3 { grid-column: span 3; }
+  .d5-card-label { font-size: 11px; color: var(--color-secondary); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px; }
+  .d5-big-num { font-size: 32px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+  .d5-chart-bars { display: flex; align-items: flex-end; gap: 4px; height: 60px; margin-top: 10px; }
+  .d5-bar { flex: 1; border-radius: 3px 3px 0 0; transition: opacity .15s; }
+  .d5-bar:hover { opacity: .8; }
+  .d5-dish-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid rgba(55,65,81,.4); }
+  .d5-dish-row:last-child { border-bottom: none; }
+  .d5-dish-name { flex: 1; font-size: 13px; }
+  .d5-dish-pct { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; width: 80px; }
+  .d5-dish-bar { flex: 1; }
+
+  /* ========== DIRECTION 6: "Zero" — Minimal focus mode ========== */
+  .d6-layout { display: flex; flex-direction: column; min-height: 700px; }
+  .d6-topbar { height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
+  .d6-topbar .logo { font-size: 18px; font-weight: 800; letter-spacing: -.03em; }
+  .d6-topbar .logo span { color: var(--color-accent); }
+  .d6-topbar nav { display: flex; gap: 4px; }
+  .d6-topbar nav a {
+    padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 500;
+    color: var(--color-secondary); text-decoration: none; cursor: pointer; transition: all .15s;
+  }
+  .d6-topbar nav a.active { background: var(--bg-surface); color: var(--color-primary); }
+  .d6-hero { padding: 40px 24px 32px; border-bottom: 1px solid var(--color-border); }
+  .d6-hero h2 { font-size: 32px; font-weight: 700; margin-bottom: 6px; font-variant-numeric: tabular-nums; }
+  .d6-hero .sub { font-size: 14px; color: var(--color-secondary); }
+  .d6-hero-kpis { display: flex; gap: 32px; margin-top: 20px; }
+  .d6-kpi-item .k-val { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .d6-kpi-item .k-label { font-size: 11px; color: var(--color-secondary); margin-top: 2px; }
+  .d6-list { padding: 0; }
+  .d6-list-header {
+    display: grid; grid-template-columns: 1fr 100px 100px 120px 100px;
+    padding: 10px 24px; border-bottom: 1px solid var(--color-border);
+    font-size: 11px; color: var(--color-secondary); text-transform: uppercase; letter-spacing: .05em;
+  }
+  .d6-list-row {
+    display: grid; grid-template-columns: 1fr 100px 100px 120px 100px;
+    padding: 14px 24px; border-bottom: 1px solid rgba(55,65,81,.4); align-items: center;
+    cursor: pointer; transition: background .1s;
+  }
+  .d6-list-row:hover { background: rgba(31,41,55,.6); }
+  .d6-list-row .name { font-size: 14px; font-weight: 500; }
+  .d6-list-row .cat { font-size: 12px; color: var(--color-secondary); margin-top: 2px; }
+  .d6-list-row .num { font-size: 13px; font-variant-numeric: tabular-nums; text-align: right; }
+  .d6-fab-area { padding: 24px; }
+  .d6-fab-btn {
+    display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px;
+    background: var(--color-accent); color: #111827; border: none; border-radius: 10px;
+    font-family: var(--font); font-size: 14px; font-weight: 600; cursor: pointer;
+    box-shadow: 0 4px 14px rgba(34,197,94,.35);
+  }
+  .d6-fab-btn svg { width: 18px; height: 18px; }
+
+  /* ========== UTILITIES ========== */
+  .label-caption { font-size: 11px; color: var(--color-secondary); }
+  .mt4 { margin-top: 4px; }
+  .mt8 { margin-top: 8px; }
+  .text-success { color: var(--color-success); }
+  .text-warning { color: var(--color-warning); }
+  .text-danger  { color: var(--color-danger);  }
+  .text-secondary { color: var(--color-secondary); }
+</style>
+</head>
+<body>
+
+<div class="tabs-bar">
+  <h1>🍴 Food Cost SaaS — Design Directions</h1>
+  <button class="tab-btn active" onclick="showDir(1)">1 · Comando</button>
+  <button class="tab-btn" onclick="showDir(2)">2 · Linea</button>
+  <button class="tab-btn" onclick="showDir(3)">3 · Schede</button>
+  <button class="tab-btn" onclick="showDir(4)">4 · Scan</button>
+  <button class="tab-btn" onclick="showDir(5)">5 · Report</button>
+  <button class="tab-btn" onclick="showDir(6)">6 · Zero</button>
+</div>
+
+<!-- ============================== DIRECTION 1: Comando ============================== -->
+<div id="dir1" class="direction active">
+  <div class="direction-header">
+    <h2>Direzione 1 — "Comando"</h2>
+    <p>Dashboard mobile-first con card KPI in primo piano e FAB OCR al centro. Struttura familiare per chi usa Revolut o app bancarie. Navigation state sempre visibile in basso.</p>
+    <span class="tag">Mobile-first · Card-centric · Revolut-inspired</span>
+  </div>
+  <div class="mockup-row">
+    <!-- MOBILE: Dashboard -->
+    <div>
+      <p style="font-size:12px;color:var(--color-secondary);margin-bottom:8px;">📱 Dashboard (mobile)</p>
+      <div class="mockup-frame mockup-mobile" style="width:360px;">
+        <div class="d1-topbar">
+          <span class="logo">fc·app</span>
+          <span class="spacer"></span>
+          <div class="avatar">MI</div>
+        </div>
+        <div class="d1-content">
+          <div class="d1-greeting">Ciao, <span>Matteo</span></div>
+          <div class="label-caption mt4">Cucina Mediterr. · Mar 2026</div>
+          <div class="d1-stats-row" style="margin-top:12px;">
+            <div class="d1-stat-card">
+              <div class="label">Food Cost Medio</div>
+              <div class="value text-warning">34%</div>
+              <div class="sub">soglia impostata: 32%</div>
+            </div>
+            <div class="d1-stat-card">
+              <div class="label">Ricette in carta</div>
+              <div class="value">12</div>
+              <div class="sub">3 sopra soglia</div>
+            </div>
+          </div>
+          <div class="d1-stats-row">
+            <div class="d1-stat-card">
+              <div class="label">Ingredienti</div>
+              <div class="value">48</div>
+              <div class="sub">aggiornati oggi</div>
+            </div>
+            <div class="d1-stat-card">
+              <div class="label">Bolle questo mese</div>
+              <div class="value text-success">7</div>
+              <div class="sub">ultima: oggi</div>
+            </div>
+          </div>
+
+          <div class="d1-section-title">RICETTE SOPRA SOGLIA</div>
+          <div class="d1-recipe-card">
+            <div class="d1-recipe-icon">🥩</div>
+            <div class="d1-recipe-info">
+              <div class="name">Tagliata di Fassona</div>
+              <div class="meta">Secondo · aggiornato 2h fa</div>
+            </div>
+            <span class="badge badge-danger">41%</span>
+          </div>
+          <div class="d1-recipe-card">
+            <div class="d1-recipe-icon">🦞</div>
+            <div class="d1-recipe-info">
+              <div class="name">Crudo di Ricciola</div>
+              <div class="meta">Antipasto · aggiornato 2h fa</div>
+            </div>
+            <span class="badge badge-warning">34%</span>
+          </div>
+          <div class="d1-recipe-card">
+            <div class="d1-recipe-icon">🥟</div>
+            <div class="d1-recipe-info">
+              <div class="name">Gyoza di Maiale</div>
+              <div class="meta">Antipasto · aggiornato 2h fa</div>
+            </div>
+            <span class="badge badge-success">28%</span>
+          </div>
+        </div>
+        <div class="d1-bottomnav">
+          <div class="d1-nav-item active">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            Home
+          </div>
+          <div class="d1-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
+            Magazzino
+          </div>
+          <div class="d1-fab">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>
+          </div>
+          <div class="d1-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            Ricette
+          </div>
+          <div class="d1-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            Report
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MOBILE: Dettaglio ricetta -->
+    <div>
+      <p style="font-size:12px;color:var(--color-secondary);margin-bottom:8px;">📱 Dettaglio ricetta</p>
+      <div class="mockup-frame mockup-mobile" style="width:360px;">
+        <div class="d1-topbar">
+          <span style="color:var(--color-accent);font-size:13px;cursor:pointer;">← Ricette</span>
+          <span class="spacer"></span>
+          <span style="color:var(--color-secondary);font-size:13px;">Modifica</span>
+        </div>
+        <div class="d1-content">
+          <div style="display:flex;align-items:center;gap:14px;">
+            <div style="width:52px;height:52px;border-radius:12px;background:var(--bg-elevated);display:flex;align-items:center;justify-content:center;font-size:26px;">🥩</div>
+            <div>
+              <div style="font-size:18px;font-weight:700;">Tagliata di Fassona</div>
+              <div style="font-size:12px;color:var(--color-secondary);margin-top:2px;">Secondo · 1 porzione</div>
+            </div>
+          </div>
+
+          <div class="d1-stats-row" style="margin-top:4px;">
+            <div class="d1-stat-card" style="border-color:var(--color-danger);">
+              <div class="label">Food Cost</div>
+              <div class="value text-danger">41%</div>
+              <div class="sub">soglia: 32%</div>
+            </div>
+            <div class="d1-stat-card">
+              <div class="label">Costo totale</div>
+              <div class="value">€8,20</div>
+              <div class="sub">per porzione</div>
+            </div>
+          </div>
+
+          <div class="d1-section-title">INGREDIENTI</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--bg-surface);border:1px solid var(--color-border);border-radius:8px;">
+              <div>
+                <div style="font-size:13px;font-weight:500;">Fassona Piemontese</div>
+                <div style="font-size:11px;color:var(--color-secondary);">250g · €24/kg</div>
+              </div>
+              <div style="font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;">€6,00</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--bg-surface);border:1px solid var(--color-border);border-radius:8px;">
+              <div>
+                <div style="font-size:13px;font-weight:500;">Miso Butter <span style="font-size:10px;background:var(--bg-elevated);padding:2px 6px;border-radius:4px;color:var(--color-secondary);margin-left:4px;">macro</span></div>
+                <div style="font-size:11px;color:var(--color-secondary);">30g · €36/kg</div>
+              </div>
+              <div style="font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;">€1,08</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--bg-surface);border:1px solid var(--color-border);border-radius:8px;">
+              <div>
+                <div style="font-size:13px;font-weight:500;">Erbe miste</div>
+                <div style="font-size:11px;color:var(--color-secondary);">15g · €7,50/kg</div>
+              </div>
+              <div style="font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;">€0,11</div>
+            </div>
+          </div>
+
+          <div style="background:var(--bg-surface);border:1px solid var(--color-border);border-radius:8px;padding:12px;margin-top:4px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <span style="font-size:12px;color:var(--color-secondary);">Ingredienti</span>
+              <span style="font-size:13px;font-weight:600;font-variant-numeric:tabular-nums;">€7,19</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+              <span style="font-size:12px;color:var(--color-secondary);">Personale + energia (stima)</span>
+              <span style="font-size:13px;font-variant-numeric:tabular-nums;">€1,01</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid var(--color-border);">
+              <span style="font-size:13px;font-weight:600;">Totale</span>
+              <span style="font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;">€8,20</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== DIRECTION 2: Linea ============================== -->
+<div id="dir2" class="direction">
+  <div class="direction-header">
+    <h2>Direzione 2 — "Linea"</h2>
+    <p>Layout desktop-first con sidebar di navigazione e tabella dati densa. Ispirazione Notion/Linear. Ottimale per sessioni più lunghe di gestione ricette e magazzino su desktop o tablet.</p>
+    <span class="tag">Desktop-first · Tabellare · Notion/Linear-inspired</span>
+  </div>
+  <div class="mockup-row">
+    <div style="width:100%;">
+      <p style="font-size:12px;color:var(--color-secondary);margin-bottom:8px;">🖥️ Vista Ricette (desktop/tablet)</p>
+      <div class="mockup-frame mockup-desktop" style="display:flex;overflow:hidden;">
+        <div class="d2-sidebar">
+          <div class="logo">fc·app</div>
+          <div class="d2-nav-item">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="16"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            Dashboard
+          </div>
+          <div class="d2-nav-item active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/></svg>
+            Ricette
+          </div>
+          <div class="d2-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
+            Magazzino
+          </div>
+          <div class="d2-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16"><path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>
+            Bolle
+          </div>
+          <div class="d2-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            Report
+          </div>
+          <div style="flex:1;"></div>
+          <div class="d2-nav-item" style="margin-top:auto;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            Matteo
+          </div>
+        </div>
+        <div class="d2-main">
+          <div class="d2-header">
+            <h2>Ricette</h2>
+            <p>12 piatti in carta · 3 sopra soglia food cost (32%)</p>
+          </div>
+          <div class="d2-filters">
+            <div class="d2-chip active">Tutte</div>
+            <div class="d2-chip">Sopra soglia</div>
+            <div class="d2-chip">Antipasti</div>
+            <div class="d2-chip">Primi</div>
+            <div class="d2-chip">Secondi</div>
+            <div style="flex:1;"></div>
+            <div style="padding:4px 12px;border-radius:6px;font-size:12px;background:var(--color-accent);color:#111827;font-weight:600;cursor:pointer;">+ Nuova ricetta</div>
+          </div>
+          <div class="d2-table">
+            <div class="d2-table-header">
+              <div>Ricetta</div>
+              <div style="text-align:right;">Costo</div>
+              <div style="text-align:right;">Food Cost</div>
+              <div style="text-align:right;">Stato</div>
+            </div>
+            <div class="d2-table-row">
+              <div><div class="name">Tagliata di Fassona c/ miso butter</div><div class="meta">Secondo · aggiornato oggi 15:32</div></div>
+              <div class="num">€8,20</div>
+              <div class="num text-danger" style="font-weight:700;">41%</div>
+              <div style="text-align:right;"><span class="badge badge-danger">Rivedi</span></div>
+            </div>
+            <div class="d2-table-row">
+              <div><div class="name">Crudo di Ricciola, ponzu e finocchietto</div><div class="meta">Antipasto · aggiornato oggi 15:32</div></div>
+              <div class="num">€7,14</div>
+              <div class="num text-warning" style="font-weight:700;">34%</div>
+              <div style="text-align:right;"><span class="badge badge-warning">Attenzione</span></div>
+            </div>
+            <div class="d2-table-row">
+              <div><div class="name">Risotto al Fondo Bruno <span style="font-size:10px;background:var(--bg-elevated);padding:2px 5px;border-radius:4px;color:var(--color-secondary);">macro</span></div><div class="meta">Primo · aggiornato oggi 15:32</div></div>
+              <div class="num">€5,87</div>
+              <div class="num text-warning" style="font-weight:700;">33%</div>
+              <div style="text-align:right;"><span class="badge badge-warning">Attenzione</span></div>
+            </div>
+            <div class="d2-table-row">
+              <div><div class="name">Gyoza di Maiale c/ ponzu</div><div class="meta">Antipasto · aggiornato oggi 15:32</div></div>
+              <div class="num">€3,36</div>
+              <div class="num text-success" style="font-weight:700;">28%</div>
+              <div style="text-align:right;"><span class="badge badge-success">OK</span></div>
+            </div>
+            <div class="d2-table-row">
+              <div><div class="name">Capesante con bisque e bergamotto</div><div class="meta">Antipasto · aggiornato ieri</div></div>
+              <div class="num">€6,90</div>
+              <div class="num text-success" style="font-weight:700;">29%</div>
+              <div style="text-align:right;"><span class="badge badge-success">OK</span></div>
+            </div>
+            <div class="d2-table-row">
+              <div><div class="name">Spaghetti alle Vongole</div><div class="meta">Primo · aggiornato ieri</div></div>
+              <div class="num">€4,20</div>
+              <div class="num text-success" style="font-weight:700;">26%</div>
+              <div style="text-align:right;"><span class="badge badge-success">OK</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== DIRECTION 3: Schede ============================== -->
+<div id="dir3" class="direction">
+  <div class="direction-header">
+    <h2>Direzione 3 — "Schede"</h2>
+    <p>Layout a griglia di card con pannello laterale alert. Stile magazine/dashboard con quick-glance su anomalie. Bilanciamento visuale tra card e sidebar informativa. Ottimo su tablet e desktop.</p>
+    <span class="tag">Card-grid · Pannello alert · Magazine-style</span>
+  </div>
+  <div class="mockup-row">
+    <div style="width:100%;">
+      <p style="font-size:12px;color:var(--color-secondary);margin-bottom:8px;">🖥️ Dashboard (desktop/tablet)</p>
+      <div class="mockup-frame mockup-desktop" style="overflow:hidden;">
+        <div class="d3-topbar">
+          <div class="logo">fc·app</div>
+          <input class="search" placeholder="Cerca ricette, ingredienti..." />
+          <div style="display:flex;gap:8px;align-items:center;">
+            <div style="padding:6px 14px;border-radius:8px;background:var(--color-accent);color:#111827;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>
+              Scan bolla
+            </div>
+            <div class="d1-avatar" style="width:32px;height:32px;border-radius:50%;background:var(--bg-elevated);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;">MI</div>
+          </div>
+        </div>
+        <div class="d3-content">
+          <div class="d3-main">
+            <div class="d3-kpi-row">
+              <div class="d3-kpi">
+                <div class="kpi-label">Food Cost medio</div>
+                <div class="kpi-value text-warning">34%</div>
+                <div class="kpi-sub">soglia: 32% · +2pp</div>
+              </div>
+              <div class="d3-kpi">
+                <div class="kpi-label">Piatti OK</div>
+                <div class="kpi-value text-success">9</div>
+                <div class="kpi-sub">di 12 in carta</div>
+              </div>
+              <div class="d3-kpi">
+                <div class="kpi-label">Ultima bolla</div>
+                <div class="kpi-value" style="font-size:18px;">Oggi</div>
+                <div class="kpi-sub">8 prodotti · 15:32</div>
+              </div>
+            </div>
+            <div style="font-size:11px;color:var(--color-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;">RICETTE</div>
+            <div class="d3-grid">
+              <div class="d3-card" style="border-color:var(--color-danger);">
+                <span class="card-emoji">🥩</span>
+                <div class="card-name">Tagliata di Fassona c/ miso butter</div>
+                <div class="card-sub">Secondo · aggiornato oggi</div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span class="badge badge-danger">41%</span>
+                  <span style="font-size:12px;color:var(--color-secondary);">€8,20</span>
+                </div>
+              </div>
+              <div class="d3-card" style="border-color:var(--color-warning);">
+                <span class="card-emoji">🦞</span>
+                <div class="card-name">Crudo di Ricciola, ponzu</div>
+                <div class="card-sub">Antipasto · aggiornato oggi</div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span class="badge badge-warning">34%</span>
+                  <span style="font-size:12px;color:var(--color-secondary);">€7,14</span>
+                </div>
+              </div>
+              <div class="d3-card">
+                <span class="card-emoji">🥟</span>
+                <div class="card-name">Gyoza di Maiale c/ ponzu</div>
+                <div class="card-sub">Antipasto · aggiornato oggi</div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span class="badge badge-success">28%</span>
+                  <span style="font-size:12px;color:var(--color-secondary);">€3,36</span>
+                </div>
+              </div>
+              <div class="d3-card">
+                <span class="card-emoji">🍝</span>
+                <div class="card-name">Risotto al Fondo Bruno</div>
+                <div class="card-sub">Primo · aggiornato ieri</div>
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <span class="badge badge-warning">33%</span>
+                  <span style="font-size:12px;color:var(--color-secondary);">€5,87</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="d3-panel">
+            <h3>Alert attivi</h3>
+            <div class="d3-alert-item">
+              <div class="d3-alert-dot" style="background:var(--color-danger);"></div>
+              <div class="d3-alert-text">
+                <strong>Tagliata sopra soglia (+9%)</strong>
+                <span>Fassona +€2,10/kg dalla bolla di oggi</span>
+              </div>
+            </div>
+            <div class="d3-alert-item">
+              <div class="d3-alert-dot" style="background:var(--color-warning);"></div>
+              <div class="d3-alert-text">
+                <strong>Ricciola variazione prezzo</strong>
+                <span>+18% rispetto alla bolla precedente</span>
+              </div>
+            </div>
+            <div class="d3-alert-item">
+              <div class="d3-alert-dot" style="background:var(--color-warning);"></div>
+              <div class="d3-alert-text">
+                <strong>Kombu in scadenza</strong>
+                <span>Scade tra 3 giorni — 200g rimanenti</span>
+              </div>
+            </div>
+            <div style="margin-top:20px;border-top:1px solid var(--color-border);padding-top:16px;">
+              <h3>Bolle recenti</h3>
+              <div style="font-size:12px;color:var(--color-secondary);margin-top:8px;line-height:1.8;">
+                <div style="display:flex;justify-content:space-between;"><span>Pesce fresco · Mer</span><span style="color:var(--color-primary);">8 prod.</span></div>
+                <div style="display:flex;justify-content:space-between;"><span>Verdure · Lun</span><span style="color:var(--color-primary);">12 prod.</span></div>
+                <div style="display:flex;justify-content:space-between;"><span>Spezie · Ven scorso</span><span style="color:var(--color-warning);">3 errori</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== DIRECTION 4: Scan ============================== -->
+<div id="dir4" class="direction">
+  <div class="direction-header">
+    <h2>Direzione 4 — "Scan"</h2>
+    <p>Focus sull'esperienza OCR come flusso principale. Viewfinder in-app, carrello revisione articolato, stato bolla sempre visibile. Mostra come funziona il momento più critico del prodotto.</p>
+    <span class="tag">OCR-first · Carrello revisione · Flusso completo</span>
+  </div>
+  <div class="mockup-row">
+    <!-- Scan viewfinder -->
+    <div>
+      <p style="font-size:12px;color:var(--color-secondary);margin-bottom:8px;">📱 Passo 1 — Scan</p>
+      <div class="mockup-frame mockup-mobile" style="width:360px;">
+        <div class="d4-scan-header">
+          <div class="back">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            Indietro
+          </div>
+          <h3>Scansiona bolla</h3>
+          <div class="skip">Carica file</div>
+        </div>
+        <div class="d4-viewfinder">
+          <div class="d4-viewfinder-overlay"></div>
+          <div class="d4-viewfinder-frame"></div>
+          <div class="d4-viewfinder-hint">Inquadra la bolla nel riquadro</div>
+        </div>
+        <div style="padding:16px;display:flex;flex-direction:column;gap:12px;">
+          <div style="background:var(--bg-surface);border-radius:10px;padding:14px;font-size:13px;">
+            <div style="font-weight:600;margin-bottom:6px;">Suggerimenti</div>
+            <div style="color:var(--color-secondary);line-height:1.6;font-size:12px;">
+              · Tieni la bolla su una superficie piana<br>
+              · Evita ombre sul documento<br>
+              · Il formato NON deve essere perfetto
+            </div>
+          </div>
+          <div style="background:var(--bg-surface);border-radius:10px;padding:14px;">
+            <div style="font-size:11px;color:var(--color-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">STORICO</div>
+            <div style="font-size:12px;color:var(--color-secondary);line-height:1.8;">
+              <div>Pesce fresco — oggi 09:14 — 8 prod.</div>
+              <div>Verdure — lun 10 mar — 12 prod.</div>
+            </div>
+          </div>
+          <button class="d4-cta" style="background:var(--bg-elevated);color:var(--color-secondary);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>
+            Scatta foto
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Carrello revisione -->
+    <div>
+      <p style="font-size:12px;color:var(--color-secondary);margin-bottom:8px;">📱 Passo 2 — Revisione carrello</p>
+      <div class="mockup-frame mockup-mobile" style="width:360px; height:700px; display:flex; flex-direction:column;">
+        <div class="d4-scan-header">
+          <div class="back">← Annulla</div>
+          <h3>Revisiona bolla</h3>
+          <div class="skip" style="color:var(--color-secondary);">Fornitore: Pesce</div>
+        </div>
+        <div style="padding: 0 16px 8px; flex: 1; overflow-y: auto;">
+          <div class="d4-results-header">
+            <h4>9 prodotti trovati</h4>
+            <div class="count">1 da rivedere · <span style="color:var(--color-warning);">2 variazioni prezzo</span></div>
+          </div>
+          <div class="d4-item">
+            <div><div class="item-name">Branzino</div><div class="item-meta">€18,50/kg · era €18,20</div></div>
+            <div class="item-qty">2,3 kg</div>
+            <div class="item-price">€42,55</div>
+            <div class="item-delta text-success" style="font-size:10px;text-align:right;">+2%</div>
+          </div>
+          <div class="d4-item warn">
+            <div><div class="item-name">Ricciola</div><div class="item-meta">€22,00/kg · era €18,60</div></div>
+            <div class="item-qty">1,8 kg</div>
+            <div class="item-price">€39,60</div>
+            <div class="item-delta text-warning" style="font-size:10px;text-align:right;">⚠️ +18%</div>
+          </div>
+          <div class="d4-item">
+            <div><div class="item-name">Tonno</div><div class="item-meta">€54,00/kg · era €54,00</div></div>
+            <div class="item-qty">0,5 kg</div>
+            <div class="item-price">€27,00</div>
+            <div class="item-delta text-secondary" style="font-size:10px;text-align:right;">=</div>
+          </div>
+          <div class="d4-item warn">
+            <div><div class="item-name">Vongole</div><div class="item-meta">€14,50/kg · era €11,80</div></div>
+            <div class="item-qty">3,0 kg</div>
+            <div class="item-price">€43,50</div>
+            <div class="item-delta text-warning" style="font-size:10px;text-align:right;">⚠️ +23%</div>
+          </div>
+          <div class="d4-item">
+            <div><div class="item-name">Capesante</div><div class="item-meta">€28,00/kg · era €28,00</div></div>
+            <div class="item-qty">0,8 kg</div>
+            <div class="item-price">€22,40</div>
+            <div class="item-delta text-secondary" style="font-size:10px;text-align:right;">=</div>
+          </div>
+          <div class="d4-item error">
+            <div><div class="item-name" style="color:var(--color-warning);">— Non riconosciuto</div><div class="item-meta" style="color:var(--color-danger);">Tocca per completare</div></div>
+            <div class="item-qty" style="color:var(--color-muted);">—</div>
+            <div class="item-price" style="color:var(--color-muted);">—</div>
+            <div style="font-size:18px;cursor:pointer;">✏️</div>
+          </div>
+          <div class="d4-item">
+            <div><div class="item-name">Orata</div><div class="item-meta">€16,00/kg · era €16,00</div></div>
+            <div class="item-qty">1,2 kg</div>
+            <div class="item-price">€19,20</div>
+            <div class="item-delta text-secondary" style="font-size:10px;text-align:right;">=</div>
+          </div>
+        </div>
+        <div style="padding: 12px 16px; border-top: 1px solid var(--color-border); background: var(--bg-surface);">
+          <button class="d4-cta" style="width:100%; opacity:.5;">
+            Completa il prodotto non riconosciuto (1)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== DIRECTION 5: Report ============================== -->
+<div id="dir5" class="direction">
+  <div class="direction-header">
+    <h2>Direzione 5 — "Report"</h2>
+    <p>Icone-only sidebar ultra-compatta, tipica di tool professionali come Figma/VS Code. Area dati massimizzata. Report e analytics in evidenza come sezione primaria. Desktop/tablet.</p>
+    <span class="tag">Analytics-first · Sidebar icone · Massima densità</span>
+  </div>
+  <div class="mockup-row">
+    <div style="width:100%;">
+      <p style="font-size:12px;color:var(--color-secondary);margin-bottom:8px;">🖥️ Report Food Cost (desktop)</p>
+      <div class="mockup-frame mockup-desktop">
+        <div class="d5-layout">
+          <div class="d5-sidebar">
+            <div style="font-size:13px;font-weight:800;color:var(--color-accent);margin-bottom:12px;">fc</div>
+            <div class="d5-icon-btn active" title="Dashboard">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            </div>
+            <div class="d5-icon-btn" title="Ricette">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/></svg>
+            </div>
+            <div class="d5-icon-btn" title="Magazzino">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
+            </div>
+            <div class="d5-icon-btn" title="Scan">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>
+            </div>
+          </div>
+          <div class="d5-main">
+            <div class="d5-topbar">
+              <h2>Report Food Cost — Marzo 2026</h2>
+              <div class="period">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                Mar 2026
+              </div>
+            </div>
+            <div class="d5-body">
+              <div class="d5-card">
+                <div class="d5-card-label">Food Cost Medio</div>
+                <div class="d5-big-num text-warning">34%</div>
+                <div style="font-size:11px;color:var(--color-secondary);margin-top:6px;">soglia: 32% · delta: +2pp</div>
+              </div>
+              <div class="d5-card">
+                <div class="d5-card-label">Costo Medio per Piatto</div>
+                <div class="d5-big-num">€5,74</div>
+                <div style="font-size:11px;color:var(--color-secondary);margin-top:6px;">range: €3,36 — €8,20</div>
+              </div>
+              <div class="d5-card">
+                <div class="d5-card-label">Ricette OK / Totale</div>
+                <div class="d5-big-num text-success">9<span style="font-size:18px;color:var(--color-secondary);font-weight:400;">/12</span></div>
+                <div style="font-size:11px;color:var(--color-secondary);margin-top:6px;">3 sopra soglia</div>
+              </div>
+              <div class="d5-card span2">
+                <div class="d5-card-label">Andamento settimanale Food Cost</div>
+                <div class="d5-chart-bars">
+                  <div class="d5-bar" style="height:40%;background:var(--color-success);"></div>
+                  <div class="d5-bar" style="height:55%;background:var(--color-success);"></div>
+                  <div class="d5-bar" style="height:62%;background:var(--color-warning);"></div>
+                  <div class="d5-bar" style="height:58%;background:var(--color-warning);"></div>
+                  <div class="d5-bar" style="height:70%;background:var(--color-warning);opacity:.6;"></div>
+                  <div class="d5-bar" style="height:75%;background:var(--color-warning);opacity:.4;"></div>
+                  <div class="d5-bar" style="height:80%;background:var(--color-danger);opacity:.3;"></div>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--color-muted);margin-top:6px;">
+                  <span>3 Mar</span><span>6 Mar</span><span>9 Mar</span><span>12 Mar</span><span>+</span>
+                </div>
+              </div>
+              <div class="d5-card">
+                <div class="d5-card-label">Top variazioni ingredienti</div>
+                <div style="margin-top:6px;font-size:12px;display:flex;flex-direction:column;gap:6px;">
+                  <div style="display:flex;justify-content:space-between;"><span style="color:var(--color-secondary);">Vongole</span><span class="text-warning font-weight:600;">+23%</span></div>
+                  <div style="display:flex;justify-content:space-between;"><span style="color:var(--color-secondary);">Ricciola</span><span class="text-warning">+18%</span></div>
+                  <div style="display:flex;justify-content:space-between;"><span style="color:var(--color-secondary);">Fassona</span><span class="text-warning">+12%</span></div>
+                </div>
+              </div>
+              <div class="d5-card span3">
+                <div class="d5-card-label">Food Cost per Piatto</div>
+                <div style="display:flex;flex-direction:column;gap:2px;margin-top:6px;">
+                  <div class="d5-dish-row">
+                    <div class="d5-dish-name">Tagliata di Fassona</div>
+                    <div class="d5-dish-pct text-danger" style="font-size:13px;font-weight:700;text-align:right;">41%</div>
+                    <div class="d5-dish-bar"><div class="food-cost-bar"><div class="food-cost-bar-fill" style="width:41%;background:var(--color-danger);"></div></div></div>
+                  </div>
+                  <div class="d5-dish-row">
+                    <div class="d5-dish-name">Risotto al Fondo Bruno</div>
+                    <div class="d5-dish-pct text-warning" style="font-size:13px;font-weight:700;text-align:right;">33%</div>
+                    <div class="d5-dish-bar"><div class="food-cost-bar"><div class="food-cost-bar-fill" style="width:33%;background:var(--color-warning);"></div></div></div>
+                  </div>
+                  <div class="d5-dish-row">
+                    <div class="d5-dish-name">Crudo di Ricciola</div>
+                    <div class="d5-dish-pct text-warning" style="font-size:13px;font-weight:700;text-align:right;">34%</div>
+                    <div class="d5-dish-bar"><div class="food-cost-bar"><div class="food-cost-bar-fill" style="width:34%;background:var(--color-warning);"></div></div></div>
+                  </div>
+                  <div class="d5-dish-row">
+                    <div class="d5-dish-name">Gyoza di Maiale</div>
+                    <div class="d5-dish-pct text-success" style="font-size:13px;font-weight:700;text-align:right;">28%</div>
+                    <div class="d5-dish-bar"><div class="food-cost-bar"><div class="food-cost-bar-fill" style="width:28%;background:var(--color-success);"></div></div></div>
+                  </div>
+                  <div class="d5-dish-row">
+                    <div class="d5-dish-name">Spaghetti alle Vongole</div>
+                    <div class="d5-dish-pct text-success" style="font-size:13px;font-weight:700;text-align:right;">26%</div>
+                    <div class="d5-dish-bar"><div class="food-cost-bar"><div class="food-cost-bar-fill" style="width:26%;background:var(--color-success);"></div></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================== DIRECTION 6: Zero ============================== -->
+<div id="dir6" class="direction">
+  <div class="direction-header">
+    <h2>Direzione 6 — "Zero"</h2>
+    <p>Layout ultra-minimal ispirato a Linear/Vercel. Navigazione in topbar orizzontale, sezione hero con KPI grande, lista tabellare pulita sotto. Massima chiarezza, zero decorazione.</p>
+    <span class="tag">Ultra-minimal · Topbar nav · Linear/Vercel-inspired</span>
+  </div>
+  <div class="mockup-row">
+    <div style="width:100%;">
+      <p style="font-size:12px;color:var(--color-secondary);margin-bottom:8px;">🖥️ Lista ingredienti (desktop)</p>
+      <div class="mockup-frame mockup-desktop">
+        <div class="d6-layout">
+          <div class="d6-topbar">
+            <div class="logo">fc<span>·</span>app</div>
+            <div style="flex:1;"></div>
+            <nav>
+              <a>Dashboard</a>
+              <a class="active">Magazzino</a>
+              <a>Ricette</a>
+              <a>Bolle</a>
+              <a>Report</a>
+            </nav>
+            <div style="flex:1;"></div>
+            <button class="d6-fab-btn" style="padding:7px 14px;font-size:13px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>
+              Scan bolla
+            </button>
+          </div>
+          <div class="d6-hero">
+            <h2>48 ingredienti</h2>
+            <div class="sub">Magazzino · aggiornato oggi alle 15:32</div>
+            <div class="d6-hero-kpis">
+              <div class="d6-kpi-item">
+                <div class="k-val text-warning">3</div>
+                <div class="k-label">variazioni prezzo oggi</div>
+              </div>
+              <div class="d6-kpi-item">
+                <div class="k-val">7</div>
+                <div class="k-label">bolle questo mese</div>
+              </div>
+              <div class="d6-kpi-item">
+                <div class="k-val text-success">€18,50</div>
+                <div class="k-label">Branzino / kg (aggiornato)</div>
+              </div>
+            </div>
+          </div>
+          <div class="d6-list">
+            <div class="d6-list-header">
+              <div>Ingrediente</div>
+              <div style="text-align:right;">Prezzo/kg</div>
+              <div style="text-align:right;">Qtà a magazzino</div>
+              <div style="text-align:right;">Variazione</div>
+              <div style="text-align:right;">Usato in</div>
+            </div>
+            <div class="d6-list-row">
+              <div><div class="name">Branzino</div><div class="cat">Pesce · aggiornato oggi</div></div>
+              <div class="num">€18,50</div>
+              <div class="num">2,3 kg</div>
+              <div class="num text-success" style="font-size:12px;">+2%</div>
+              <div class="num" style="color:var(--color-secondary);">3 ricette</div>
+            </div>
+            <div class="d6-list-row">
+              <div><div class="name">Ricciola</div><div class="cat">Pesce · aggiornato oggi</div></div>
+              <div class="num">€22,00</div>
+              <div class="num">1,8 kg</div>
+              <div class="num text-warning" style="font-size:12px;">⚠️ +18%</div>
+              <div class="num" style="color:var(--color-secondary);">2 ricette</div>
+            </div>
+            <div class="d6-list-row">
+              <div><div class="name">Fassona Piemontese</div><div class="cat">Carne · aggiornato oggi</div></div>
+              <div class="num">€24,00</div>
+              <div class="num">3,5 kg</div>
+              <div class="num text-warning" style="font-size:12px;">⚠️ +12%</div>
+              <div class="num" style="color:var(--color-secondary);">1 ricetta</div>
+            </div>
+            <div class="d6-list-row">
+              <div><div class="name">Kombu</div><div class="cat">Ingrediente secco · aggiornato lun</div></div>
+              <div class="num">€48,00</div>
+              <div class="num">200 g</div>
+              <div class="num text-secondary" style="font-size:12px;">=</div>
+              <div class="num" style="color:var(--color-secondary);">4 ricette</div>
+            </div>
+            <div class="d6-list-row">
+              <div><div class="name">Fondo Bruno <span style="font-size:10px;background:var(--bg-elevated);padding:2px 5px;border-radius:4px;color:var(--color-secondary);margin-left:4px;">macro</span></div><div class="cat">Preparazione base · aggiornato oggi</div></div>
+              <div class="num">€12,40</div>
+              <div class="num">1,2 L</div>
+              <div class="num text-success" style="font-size:12px;">ricalcolato</div>
+              <div class="num" style="color:var(--color-secondary);">5 ricette</div>
+            </div>
+            <div class="d6-list-row">
+              <div><div class="name">Miso</div><div class="cat">Ingrediente secco · aggiornato lun</div></div>
+              <div class="num">€22,00</div>
+              <div class="num">500 g</div>
+              <div class="num text-secondary" style="font-size:12px;">=</div>
+              <div class="num" style="color:var(--color-secondary);">2 ricette</div>
+            </div>
+          </div>
+          <div class="d6-fab-area">
+            <button class="d6-fab-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+              Aggiungi ingrediente
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showDir(n) {
+    document.querySelectorAll('.direction').forEach(d => d.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('dir' + n).classList.add('active');
+    document.querySelectorAll('.tab-btn')[n - 1].classList.add('active');
+  }
+</script>
+</body>
+</html>

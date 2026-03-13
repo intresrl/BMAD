@@ -1,0 +1,35 @@
+// Angular Material theming — Nero di Cucina dark theme
+@use '@angular/material' as mat;
+
+// FoodCost App design tokens
+:root {
+  --color-bg-base: #111827;
+  --color-accent: #22C55E;
+  --color-text-primary: #F9FAFB;
+  --color-text-muted: #9CA3AF;
+}
+
+html {
+  height: 100%;
+  color-scheme: dark;
+  @include mat.theme(
+    (
+      color: (
+        theme-type: dark,
+        primary: mat.$green-palette,
+        tertiary: mat.$cyan-palette,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+}
+
+body {
+  background-color: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font: var(--mat-sys-body-medium);
+  margin: 0;
+  height: 100%;
+}
+/* You can add global styles to this file, and also import other style files */

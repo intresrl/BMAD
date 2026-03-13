@@ -1,0 +1,3 @@
+-- V1: Initial schema placeholder
+-- Real schema migrations for tenant, users, ingredients, recipes etc.
+-- will be added starting from Story 1.2 onwards.

@@ -6,8 +6,10 @@ import kotlin.test.assertNotNull
 class FoodCostApplicationTests {
 
 	@Test
-	fun applicationClassExists() {
-		val app = FoodCostApplication()
-		assertNotNull(app)
+	fun applicationClassHasSpringBootAnnotation() {
+		val annotation = FoodCostApplication::class.java.getAnnotation(
+			org.springframework.boot.autoconfigure.SpringBootApplication::class.java
+		)
+		assertNotNull(annotation, "FoodCostApplication must be annotated with @SpringBootApplication")
 	}
 }

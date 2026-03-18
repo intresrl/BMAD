@@ -1,0 +1,42 @@
+<div class="register-container">
+  <h1>Crea il tuo account</h1>
+
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <mat-form-field appearance="outline">
+      <mat-label>Email</mat-label>
+      <input matInput formControlName="email" type="email" autocomplete="email" />
+      @if (form.controls.email.hasError('required') && form.controls.email.touched) {
+        <mat-error>L'email è obbligatoria</mat-error>
+      } @else if (form.controls.email.hasError('email') && form.controls.email.touched) {
+        <mat-error>Inserisci un'email valida</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Password</mat-label>
+      <input matInput formControlName="password" type="password" autocomplete="new-password" />
+      @if (form.controls.password.hasError('required') && form.controls.password.touched) {
+        <mat-error>La password è obbligatoria</mat-error>
+      } @else if (form.controls.password.hasError('minlength') && form.controls.password.touched) {
+        <mat-error>La password deve essere di almeno 8 caratteri</mat-error>
+      }
+    </mat-form-field>
+
+    @if (serverError()) {
+      <p class="server-error">{{ serverError() }}</p>
+    }
+
+    <button
+      mat-raised-button
+      color="primary"
+      type="submit"
+      [disabled]="form.invalid || isSubmitting()"
+    >
+      @if (isSubmitting()) {
+        <mat-spinner diameter="20"></mat-spinner>
+      } @else {
+        Registrati
+      }
+    </button>
+  </form>
+</div>

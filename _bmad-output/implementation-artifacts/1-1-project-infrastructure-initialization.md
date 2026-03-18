@@ -1,6 +1,6 @@
 # Story 1.1: Project Infrastructure Initialization
 
-Status: review
+Status: done
 
 ## Story
 
@@ -303,13 +303,23 @@ Claude Opus 4.6 (GitHub Copilot)
 - ✅ Task 3: Nero di Cucina dark theme applied (Material M3 dark, `--color-bg-base: #111827`, `--color-accent: #22C55E`). `fc-` prefix set in angular.json.
 - ✅ Task 4: docker-compose.yml created with PostgreSQL 16 Alpine + healthcheck. application.properties configured for local dev datasource.
 - ✅ Task 5: `.github/workflows/ci.yml` with frontend (lint+build) and backend (test+build) jobs on pull_request.
-- ✅ Task 6: All builds pass (Angular dev + prod, Gradle build + test). Frontend tests: 2/2 pass (Vitest). Backend tests: 2/2 pass (JUnit 5).
+- ✅ Task 6: All builds pass (Angular dev + prod, Gradle build + test). Frontend tests: 1/1 pass (Vitest). Backend tests: 2/2 pass (JUnit 5).
 - ⚠️ Note: `./gradlew bootRun` requires `docker compose up -d` first (PostgreSQL must be running). Flyway placeholder migration V1__init_schema.sql created.
 - ⚠️ Note: SecurityConfig is temporary scaffolding (permitAll) — will be replaced in Story 1.2.
 
 ### Change Log
 
 - 2026-03-13: Story 1.1 implementation complete. Monorepo scaffolded, all builds and tests passing.
+- 2026-03-18: Code review (AI). Fixed 2 HIGH + 5 MEDIUM + 2 LOW issues:
+  - H1: Removed Angular CLI placeholder boilerplate from app.html (350+ lines → `<router-outlet />`)
+  - H2: Removed placeholder-dependent test from app.spec.ts (was checking for 'Hello, frontend' h1)
+  - M1: Removed unused `@tailwindcss/vite` devDependency from package.json
+  - M2: Fixed build.gradle.kts description from 'Demo project' to 'FoodCost SaaS Backend'
+  - M3: Improved backend tests to verify annotations instead of just instantiation
+  - M4: Fixed rootProject.name in settings.gradle.kts from 'backend' to 'foodcost'
+  - M5: Fixed CI node-version from '24' to '22' (aligning with story documentation)
+  - L1: Updated index.html `<title>` from 'Frontend' to 'FoodCost'
+  - All builds and tests pass after fixes.
 
 ### File List
 
@@ -332,4 +342,12 @@ Claude Opus 4.6 (GitHub Copilot)
 - `apps/frontend/angular.json` — prefix `fc-`, Tailwind CSS as separate style entry
 - `apps/frontend/src/styles.scss` — Nero di Cucina dark theme with Material M3
 - `apps/backend/src/main/resources/application.properties` — Local dev datasource
-- `apps/backend/build.gradle.kts` — Added MockK test dependency
+- `apps/backend/build.gradle.kts` — Added MockK test dependency; fixed description
+- `apps/backend/settings.gradle.kts` — Fixed rootProject.name to 'foodcost'
+- `apps/frontend/src/app/app.html` — Removed Angular CLI placeholder boilerplate
+- `apps/frontend/src/app/app.spec.ts` — Removed placeholder-dependent render test
+- `apps/frontend/package.json` — Removed unused @tailwindcss/vite dependency
+- `apps/frontend/src/index.html` — Updated title to 'FoodCost'
+- `apps/backend/src/test/kotlin/com/foodcost/FoodCostApplicationTests.kt` — Improved to verify @SpringBootApplication annotation
+- `apps/backend/src/test/kotlin/com/foodcost/config/SecurityConfigTest.kt` — Improved to verify @Configuration and @EnableWebSecurity annotations
+- `.github/workflows/ci.yml` — Fixed node-version from 24 to 22

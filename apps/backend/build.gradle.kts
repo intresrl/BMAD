@@ -8,7 +8,7 @@ plugins {
 
 group = "com.foodcost"
 version = "0.0.1-SNAPSHOT"
-description = "Demo project for Spring Boot"
+description = "FoodCost SaaS Backend"
 
 java {
 	toolchain {
@@ -30,6 +30,12 @@ dependencies {
 	implementation("org.flywaydb:flyway-database-postgresql")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("tools.jackson.module:jackson-module-kotlin")
+	// JWT (Story 1.2)
+	implementation("io.jsonwebtoken:jjwt-api:0.12.6")
+	runtimeOnly("io.jsonwebtoken:jjwt-impl:0.12.6")
+	runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.12.6")
+	// BouncyCastle — required by Argon2PasswordEncoder (Story 1.2)
+	implementation("org.bouncycastle:bcprov-jdk18on:1.79")
 	runtimeOnly("org.postgresql:postgresql")
 	testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
@@ -39,6 +45,8 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testImplementation("io.mockk:mockk:1.14.0")
+	testImplementation("org.mockito.kotlin:mockito-kotlin:5.4.0")
+	testRuntimeOnly("com.h2database:h2")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

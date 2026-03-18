@@ -1,4 +1,4 @@
 package com.foodcost.auth.service
 
-class EmailAlreadyExistsException(email: String) :
-    RuntimeException("An account with this email already exists: $email")
+class EmailAlreadyExistsException :
+    RuntimeException("An account with this email already exists")

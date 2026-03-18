@@ -28,7 +28,7 @@ class AuthService(
     @Transactional
     fun register(request: RegisterRequest): Pair<AuthResponse, String> {
         if (userRepository.existsByEmail(request.email)) {
-            throw EmailAlreadyExistsException(request.email)
+            throw EmailAlreadyExistsException()
         }
 
         val tenantName = request.email.substringAfter('@').ifBlank { "default" }

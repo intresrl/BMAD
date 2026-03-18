@@ -52,7 +52,7 @@ class AuthControllerIntegrationTest {
     @Test
     fun `POST register with duplicate email returns 422 RFC 7807 Problem Detail`() {
         whenever(authService.register(any()))
-            .thenThrow(EmailAlreadyExistsException("chef@example.com"))
+            .thenThrow(EmailAlreadyExistsException())
 
         mockMvc.post("/api/v1/auth/register") {
             contentType = MediaType.APPLICATION_JSON

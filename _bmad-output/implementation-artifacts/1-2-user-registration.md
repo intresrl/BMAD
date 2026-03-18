@@ -1,6 +1,6 @@
 # Story 1.2: User Registration
 
-Status: review
+Status: done
 
 ## Story
 
@@ -544,7 +544,7 @@ Claude Opus 4.6 (via GitHub Copilot)
 - Backend: JWT auth with Argon2id password hashing, Spring Security with JwtAuthenticationFilter, RFC 7807 error handling, Flyway V2 migration for tenants/users/refresh_tokens
 - Frontend: Registration form with Angular Material, reactive validation, AuthService + TokenService + authGuard, lazy-loaded routes with stub modules for future features
 - 9 backend tests pass: 3 unit tests (AuthServiceTest with MockK), 4 integration tests (AuthControllerIntegrationTest with @SpringBootTest+MockMvc), 2 pre-existing
-- Rate limiting (Architecture Compliance Checklist item) was NOT implemented — not mapped to any task/subtask in the story
+- Rate limiting (Architecture Compliance Checklist item) implemented via RateLimitFilter (5 req/min per IP on /api/v1/auth/ endpoints)
 - Architecture compliance verified: tenant_id never in request, Argon2id params correct, JWT claims correct, STATELESS sessions, OnPush on all components, fc- prefix on selectors, HttpOnly cookie for refresh token
 
 ### File List
@@ -565,6 +565,7 @@ Claude Opus 4.6 (via GitHub Copilot)
 - `apps/backend/src/main/kotlin/com/foodcost/auth/service/EmailAlreadyExistsException.kt`
 - `apps/backend/src/main/kotlin/com/foodcost/auth/AuthController.kt`
 - `apps/backend/src/main/kotlin/com/foodcost/auth/filter/JwtAuthenticationFilter.kt`
+- `apps/backend/src/main/kotlin/com/foodcost/auth/filter/RateLimitFilter.kt`
 - `apps/backend/src/main/kotlin/com/foodcost/config/PasswordEncoderConfig.kt`
 - `apps/backend/src/main/kotlin/com/foodcost/config/GlobalExceptionHandler.kt`
 - `apps/backend/src/test/resources/application.properties`
@@ -587,11 +588,20 @@ Claude Opus 4.6 (via GitHub Copilot)
 
 **Modified files:**
 - `apps/backend/build.gradle.kts` — added JJWT, BouncyCastle, H2, mockito-kotlin dependencies
+- `apps/backend/settings.gradle.kts` — rootProject name
 - `apps/backend/src/main/resources/application.properties` — added JWT config properties
 - `apps/backend/src/main/kotlin/com/foodcost/config/SecurityConfig.kt` — replaced permissive scaffold with JWT-based config
+- `apps/backend/src/test/kotlin/com/foodcost/FoodCostApplicationTests.kt` — updated for Story 1.2 context
+- `apps/backend/src/test/kotlin/com/foodcost/config/SecurityConfigTest.kt` — behavioral security tests
+- `apps/frontend/package.json` — added Angular Material, CDK dependencies
 - `apps/frontend/src/app/app.routes.ts` — full route table with lazy-loaded feature modules + authGuard
 - `apps/frontend/src/app/app.config.ts` — added provideHttpClient(withFetch())
+- `apps/frontend/src/app/app.html` — router-outlet
+- `apps/frontend/src/app/app.spec.ts` — updated for new app structure
+- `apps/frontend/src/index.html` — Material Icons and Roboto font links
+- `.github/workflows/ci.yml` — CI pipeline
 
 ### Change Log
 
 - 2026-03-18: Implemented Story 1.2 — User Registration (all 16 tasks, 9 backend tests passing, frontend build successful)
+- 2026-03-18: Code review fixes — H1: tenantId extraction added to JwtAuthenticationFilter SecurityContext details; H2: @NotBlank added to RegisterRequest.email; M1: PII removed from EmailAlreadyExistsException; M2: RateLimitFilter added (5 req/min per IP on auth endpoints); M3: SecurityConfigTest rewritten with behavioral tests (401 on protected, 200 on actuator/health)

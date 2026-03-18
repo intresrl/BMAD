@@ -30,7 +30,9 @@ class JwtAuthenticationFilter(private val jwtService: JwtService) : OncePerReque
             val claims = jwtService.validateAccessToken(token)
             val roles = (claims["roles"] as? String)?.split(",") ?: emptyList()
             val authorities = roles.map { SimpleGrantedAuthority(it.trim()) }
-            val auth = UsernamePasswordAuthenticationToken(claims.subject, null, authorities)
+            val auth = UsernamePasswordAuthenticationToken(claims.subject, null, authorities).apply {
+                details = mapOf("tenantId" to claims["tenantId"])
+            }
             SecurityContextHolder.getContext().authentication = auth
         } catch (e: JwtException) {
             SecurityContextHolder.clearContext()

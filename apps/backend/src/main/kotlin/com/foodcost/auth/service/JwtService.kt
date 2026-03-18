@@ -21,7 +21,7 @@ class JwtService(
     }
 
     fun generateAccessToken(user: User): String = Jwts.builder()
-        .subject(user.id.toString())
+        .subject(user.id!!.toString())
         .issuer(issuer)
         .claim("tenantId", user.tenantId.toString())
         .claim("roles", user.roles)

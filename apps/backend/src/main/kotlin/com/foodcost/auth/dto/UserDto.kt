@@ -11,7 +11,7 @@ data class UserDto(
 ) {
     companion object {
         fun from(user: User) = UserDto(
-            id = user.id,
+            id = user.id!!,
             email = user.email,
             createdAt = user.createdAt,
         )

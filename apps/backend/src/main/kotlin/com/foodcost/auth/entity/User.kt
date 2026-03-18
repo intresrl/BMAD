@@ -9,7 +9,7 @@ import java.util.UUID
 class User(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    val id: UUID = UUID.randomUUID(),
+    val id: UUID? = null,
 
     @Column(name = "tenant_id", nullable = false)
     val tenantId: UUID,

@@ -8,9 +8,12 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import java.net.URI
+import org.slf4j.LoggerFactory
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
+
+    private val log = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
 
     @ExceptionHandler(EmailAlreadyExistsException::class)
     @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
@@ -36,8 +39,10 @@ class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception::class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    fun handleGeneric(e: Exception): ProblemDetail =
-        ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred").also {
+    fun handleGeneric(e: Exception): ProblemDetail {
+        log.error("Unhandled exception", e)
+        return ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred").also {
             it.type = URI.create("https://foodcost.app/errors/internal-error")
         }
+    }
 }

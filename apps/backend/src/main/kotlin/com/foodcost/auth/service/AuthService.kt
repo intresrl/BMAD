@@ -16,6 +16,8 @@ import java.security.MessageDigest
 import java.time.Instant
 import java.util.Base64
 
+import org.slf4j.LoggerFactory
+
 @Service
 class AuthService(
     private val userRepository: UserRepository,
@@ -25,8 +27,11 @@ class AuthService(
     private val passwordEncoder: Argon2PasswordEncoder,
 ) {
 
+    private val log = LoggerFactory.getLogger(AuthService::class.java)
+
     @Transactional
     fun register(request: RegisterRequest): Pair<AuthResponse, String> {
+        log.info("Registration attempt for email domain: {}", request.email.substringAfter('@'))
         if (userRepository.existsByEmail(request.email)) {
             throw EmailAlreadyExistsException()
         }
@@ -37,7 +42,7 @@ class AuthService(
         val passwordHash: String = passwordEncoder.encode(request.password)!!
         val user = userRepository.save(
             User(
-                tenantId = tenant.id,
+                tenantId = tenant.id!!,
                 email = request.email,
                 passwordHash = passwordHash,
             )
@@ -47,7 +52,7 @@ class AuthService(
         val tokenHash = sha256Hex(rawRefreshToken)
         refreshTokenRepository.save(
             RefreshToken(
-                userId = user.id,
+                userId = user.id!!,
                 tokenHash = tokenHash,
                 expiresAt = Instant.now().plusSeconds(30L * 24 * 60 * 60),
             )

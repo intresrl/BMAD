@@ -1,6 +1,7 @@
 package com.foodcost.config
 
 import com.foodcost.auth.service.EmailAlreadyExistsException
+import com.foodcost.auth.service.InvalidCredentialsException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.springframework.web.bind.MethodArgumentNotValidException
@@ -24,6 +25,14 @@ class GlobalExceptionHandler {
         ).also {
             it.type = URI.create("https://foodcost.app/errors/email-already-exists")
             it.title = "Unprocessable Entity"
+        }
+
+    @ExceptionHandler(InvalidCredentialsException::class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    fun handleInvalidCredentials(e: InvalidCredentialsException): ProblemDetail =
+        ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Invalid credentials").also {
+            it.type = URI.create("https://foodcost.app/errors/invalid-credentials")
+            it.title = "Unauthorized"
         }
 
     @ExceptionHandler(MethodArgumentNotValidException::class)

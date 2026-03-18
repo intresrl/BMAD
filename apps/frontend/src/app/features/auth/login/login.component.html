@@ -1,0 +1,43 @@
+<div class="login-container">
+  <h1>Accedi al tuo account</h1>
+
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <mat-form-field appearance="outline">
+      <mat-label>Email</mat-label>
+      <input matInput formControlName="email" type="email" autocomplete="email" />
+      @if (form.controls.email.hasError('required') && form.controls.email.touched) {
+        <mat-error>L'email è obbligatoria</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Password</mat-label>
+      <input matInput formControlName="password" type="password" autocomplete="current-password" />
+      @if (form.controls.password.hasError('required') && form.controls.password.touched) {
+        <mat-error>La password è obbligatoria</mat-error>
+      }
+    </mat-form-field>
+
+    @if (serverError()) {
+      <p class="server-error">{{ serverError() }}</p>
+    }
+
+    <button
+      mat-raised-button
+      color="primary"
+      type="submit"
+      [disabled]="form.invalid || isSubmitting()"
+    >
+      @if (isSubmitting()) {
+        <mat-spinner diameter="20"></mat-spinner>
+      } @else {
+        Accedi
+      }
+    </button>
+
+    <div class="links">
+      <a routerLink="/auth/forgot-password">Hai dimenticato la password?</a>
+      <a routerLink="/auth/register">Non hai un account? Registrati</a>
+    </div>
+  </form>
+</div>

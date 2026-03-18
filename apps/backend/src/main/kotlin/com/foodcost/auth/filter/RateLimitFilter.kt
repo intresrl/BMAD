@@ -41,8 +41,10 @@ class RateLimitFilter(
         }!!
 
         if (entry.count.get() > maxRequests) {
+            val retryAfterSeconds = maxOf(0L, windowSeconds - (now - entry.windowStart) / 1000)
             response.status = 429
             response.contentType = "application/problem+json"
+            response.setHeader("Retry-After", retryAfterSeconds.toString())
             response.writer.write(
                 """{"type":"https://foodcost.app/errors/rate-limit","title":"Too Many Requests","status":429,"detail":"Rate limit exceeded. Try again later."}""",
             )

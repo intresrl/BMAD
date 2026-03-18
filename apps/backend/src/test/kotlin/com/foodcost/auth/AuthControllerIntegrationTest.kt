@@ -1,9 +1,11 @@
 package com.foodcost.auth
 
 import com.foodcost.auth.dto.AuthResponse
+import com.foodcost.auth.dto.LoginRequest
 import com.foodcost.auth.dto.UserDto
 import com.foodcost.auth.service.AuthService
 import com.foodcost.auth.service.EmailAlreadyExistsException
+import com.foodcost.auth.service.InvalidCredentialsException
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.whenever
@@ -86,6 +88,68 @@ class AuthControllerIntegrationTest {
             status { isBadRequest() }
             jsonPath("$.status") { value(400) }
             jsonPath("$.fields.email") { exists() }
+        }
+    }
+
+    @Test
+    fun `POST login with valid credentials returns 200 and AuthResponse with refreshToken cookie`() {
+        val userId = UUID.randomUUID()
+        val authResponse = AuthResponse(
+            accessToken = "login.jwt.token",
+            user = UserDto(id = userId, email = "chef@example.com", createdAt = Instant.now()),
+        )
+        whenever(authService.login(any())).thenReturn(authResponse to "raw-login-refresh-token")
+
+        mockMvc.post("/api/v1/auth/login") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """{"email":"chef@example.com","password":"secure123"}"""
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.accessToken") { value("login.jwt.token") }
+            jsonPath("$.user.id") { value(userId.toString()) }
+            jsonPath("$.user.email") { value("chef@example.com") }
+            cookie { value("refreshToken", "raw-login-refresh-token") }
+            cookie { httpOnly("refreshToken", true) }
+        }
+    }
+
+    @Test
+    fun `POST login with wrong password returns 401 RFC 7807 Problem Detail`() {
+        whenever(authService.login(any())).thenThrow(InvalidCredentialsException())
+
+        mockMvc.post("/api/v1/auth/login") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """{"email":"chef@example.com","password":"wrongpass"}"""
+        }.andExpect {
+            status { isUnauthorized() }
+            jsonPath("$.status") { value(401) }
+            jsonPath("$.title") { value("Unauthorized") }
+            jsonPath("$.detail") { value("Invalid credentials") }
+        }
+    }
+
+    @Test
+    fun `POST login with non-existent email returns 401 with same message as wrong password`() {
+        whenever(authService.login(any())).thenThrow(InvalidCredentialsException())
+
+        mockMvc.post("/api/v1/auth/login") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """{"email":"noone@example.com","password":"secure123"}"""
+        }.andExpect {
+            status { isUnauthorized() }
+            jsonPath("$.status") { value(401) }
+            jsonPath("$.detail") { value("Invalid credentials") }
+        }
+    }
+
+    @Test
+    fun `POST login with blank email returns 400`() {
+        mockMvc.post("/api/v1/auth/login") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """{"email":"","password":"secure123"}"""
+        }.andExpect {
+            status { isBadRequest() }
+            jsonPath("$.status") { value(400) }
         }
     }
 }

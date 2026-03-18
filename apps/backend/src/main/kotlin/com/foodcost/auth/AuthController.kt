@@ -1,6 +1,7 @@
 package com.foodcost.auth
 
 import com.foodcost.auth.dto.AuthResponse
+import com.foodcost.auth.dto.LoginRequest
 import com.foodcost.auth.dto.RegisterRequest
 import com.foodcost.auth.service.AuthService
 import jakarta.servlet.http.Cookie
@@ -26,7 +27,22 @@ class AuthController(private val authService: AuthService) {
     ): ResponseEntity<AuthResponse> {
         log.info("POST /api/v1/auth/register called")
         val (authResponse, rawRefreshToken) = authService.register(request)
+        addRefreshTokenCookie(response, rawRefreshToken)
+        return ResponseEntity.status(201).body(authResponse)
+    }
 
+    @PostMapping("/login")
+    fun login(
+        @Valid @RequestBody request: LoginRequest,
+        response: HttpServletResponse,
+    ): ResponseEntity<AuthResponse> {
+        log.info("POST /api/v1/auth/login called")
+        val (authResponse, rawRefreshToken) = authService.login(request)
+        addRefreshTokenCookie(response, rawRefreshToken)
+        return ResponseEntity.ok(authResponse)
+    }
+
+    private fun addRefreshTokenCookie(response: HttpServletResponse, rawRefreshToken: String) {
         val cookie = Cookie("refreshToken", rawRefreshToken).apply {
             isHttpOnly = true
             secure = true
@@ -35,7 +51,5 @@ class AuthController(private val authService: AuthService) {
             setAttribute("SameSite", "Strict")
         }
         response.addCookie(cookie)
-
-        return ResponseEntity.status(201).body(authResponse)
     }
 }

@@ -1,5 +1,6 @@
 package com.foodcost.auth
 
+import com.foodcost.auth.dto.LoginRequest
 import com.foodcost.auth.dto.RegisterRequest
 import com.foodcost.auth.entity.RefreshToken
 import com.foodcost.auth.entity.Tenant
@@ -9,6 +10,7 @@ import com.foodcost.auth.repository.TenantRepository
 import com.foodcost.auth.repository.UserRepository
 import com.foodcost.auth.service.AuthService
 import com.foodcost.auth.service.EmailAlreadyExistsException
+import com.foodcost.auth.service.InvalidCredentialsException
 import com.foodcost.auth.service.JwtService
 import io.mockk.every
 import io.mockk.mockk
@@ -116,5 +118,59 @@ class AuthServiceTest {
         authService.register(request)
 
         assertFalse(tokenSlot.captured.tokenHash == rawToken, "Refresh token must be stored hashed, not plaintext")
+    }
+
+    @Test
+    fun `login_withValidCredentials_returnsAuthResponseAndRefreshToken`() {
+        val tenantId = UUID.randomUUID()
+        val userId = UUID.randomUUID()
+        val user = User(id = userId, tenantId = tenantId, email = "chef@example.com", passwordHash = "hashed")
+        val savedRefreshToken = RefreshToken(userId = userId, tokenHash = "somehash", expiresAt = Instant.now().plusSeconds(3600))
+
+        every { userRepository.findByEmail("chef@example.com") } returns user
+        every { passwordEncoder.matches("secure123", "hashed") } returns true
+        every { jwtService.generateRefreshToken() } returns "raw-refresh-token"
+        every { refreshTokenRepository.save(any()) } returns savedRefreshToken
+        every { jwtService.generateAccessToken(user) } returns "access-token-jwt"
+
+        val (authResponse, rawRefreshToken) = authService.login(LoginRequest("chef@example.com", "secure123"))
+
+        assertNotNull(authResponse)
+        assertEquals("access-token-jwt", authResponse.accessToken)
+        assertEquals(userId, authResponse.user.id)
+        assertEquals("chef@example.com", authResponse.user.email)
+        assertEquals("raw-refresh-token", rawRefreshToken)
+
+        verify(exactly = 1) { refreshTokenRepository.save(any()) }
+    }
+
+    @Test
+    fun `login_withNonExistentEmail_throwsInvalidCredentialsException`() {
+        every { userRepository.findByEmail("noone@example.com") } returns null
+        every { passwordEncoder.matches(any(), any()) } returns false
+
+        assertThrows<InvalidCredentialsException> {
+            authService.login(LoginRequest("noone@example.com", "secure123"))
+        }
+
+        // Timing-attack prevention: passwordEncoder.matches() MUST be called even when user not found
+        verify(exactly = 1) { passwordEncoder.matches(any(), any()) }
+        verify(exactly = 0) { refreshTokenRepository.save(any()) }
+    }
+
+    @Test
+    fun `login_withWrongPassword_throwsInvalidCredentialsException`() {
+        val tenantId = UUID.randomUUID()
+        val userId = UUID.randomUUID()
+        val user = User(id = userId, tenantId = tenantId, email = "chef@example.com", passwordHash = "hashed")
+
+        every { userRepository.findByEmail("chef@example.com") } returns user
+        every { passwordEncoder.matches("wrongpass", "hashed") } returns false
+
+        assertThrows<InvalidCredentialsException> {
+            authService.login(LoginRequest("chef@example.com", "wrongpass"))
+        }
+
+        verify(exactly = 0) { refreshTokenRepository.save(any()) }
     }
 }

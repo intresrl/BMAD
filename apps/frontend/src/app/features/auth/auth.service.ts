@@ -23,4 +23,11 @@ export class AuthService {
       password,
     });
   }
+
+  login(email: string, password: string): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>('/api/v1/auth/login', {
+      email,
+      password,
+    });
+  }
 }

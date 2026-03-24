@@ -12,3 +12,9 @@ export interface IngredientCreateRequest {
   unit: string;
   price: number;
 }
+
+export interface IngredientUpdateRequest {
+  name: string;
+  unit: string;
+  price: number;
+}

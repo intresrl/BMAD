@@ -1,5 +1,5 @@
 <div class="ingredient-form-container">
-  <h2>Aggiungi ingrediente</h2>
+  <h2>{{ isEditMode ? 'Modifica ingrediente' : 'Aggiungi ingrediente' }}</h2>
 
   <form [formGroup]="form" (ngSubmit)="submit()">
     <mat-form-field appearance="outline">
@@ -47,7 +47,7 @@
       @if (isSubmitting()) {
         <mat-spinner diameter="20"></mat-spinner>
       } @else {
-        Aggiungi
+        {{ isEditMode ? 'Salva' : 'Aggiungi' }}
       }
     </button>
   </form>

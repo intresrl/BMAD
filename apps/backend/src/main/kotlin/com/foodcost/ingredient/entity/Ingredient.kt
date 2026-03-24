@@ -16,13 +16,13 @@ class Ingredient(
     val tenantId: UUID,
 
     @Column(nullable = false)
-    val name: String,
+    var name: String,
 
     @Column(nullable = false)
-    val unit: String,
+    var unit: String,
 
     @Column(nullable = false, precision = 12, scale = 4)
-    val price: BigDecimal,
+    var price: BigDecimal,
 
     @Column(name = "created_at", nullable = false, updatable = false)
     val createdAt: Instant = Instant.now(),

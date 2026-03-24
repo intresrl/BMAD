@@ -49,4 +49,27 @@ export class IngredientListComponent {
       });
     }
   }
+
+  openEditForm(ingredient: Ingredient): void {
+    const isMobile = this.breakpointObserver.isMatched('(max-width: 767px)');
+
+    if (isMobile) {
+      const ref = this.bottomSheet.open(IngredientFormComponent, {
+        data: ingredient,
+      });
+      ref.instance.saved.subscribe(() => {
+        ref.dismiss();
+        this.ingredients.reload();
+      });
+    } else {
+      const ref = this.dialog.open(IngredientFormComponent, {
+        width: '480px',
+        data: ingredient,
+      });
+      ref.componentInstance.saved.subscribe(() => {
+        ref.close();
+        this.ingredients.reload();
+      });
+    }
+  }
 }

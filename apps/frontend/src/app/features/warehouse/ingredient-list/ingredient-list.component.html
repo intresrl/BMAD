@@ -22,7 +22,12 @@
   } @else {
     <div class="ingredient-rows">
       @for (ingredient of ingredients.value(); track ingredient.id) {
-        <div class="ingredient-row">
+        <div class="ingredient-row"
+             (click)="openEditForm(ingredient)"
+             (keydown.enter)="openEditForm(ingredient)"
+             role="button"
+             tabindex="0"
+             [attr.aria-label]="'Modifica ' + ingredient.name">
           <span class="name">{{ ingredient.name }}</span>
           <span class="unit">{{ ingredient.unit }}</span>
           <span class="price tabular-nums">{{ ingredient.price | number:'1.2-4' }} €/{{ ingredient.unit }}</span>

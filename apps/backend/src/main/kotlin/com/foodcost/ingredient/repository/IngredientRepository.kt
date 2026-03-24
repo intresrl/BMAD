@@ -7,4 +7,5 @@ import java.util.UUID
 interface IngredientRepository : JpaRepository<Ingredient, UUID> {
     fun findByTenantIdOrderByCreatedAtDesc(tenantId: UUID): List<Ingredient>
     fun existsByTenantIdAndNameIgnoreCase(tenantId: UUID, name: String): Boolean
+    fun findByIdAndTenantId(id: UUID, tenantId: UUID): Ingredient?
 }

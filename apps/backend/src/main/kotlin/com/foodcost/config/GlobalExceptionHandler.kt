@@ -3,6 +3,7 @@ package com.foodcost.config
 import com.foodcost.auth.service.EmailAlreadyExistsException
 import com.foodcost.auth.service.InvalidCredentialsException
 import com.foodcost.ingredient.service.DuplicateIngredientException
+import com.foodcost.ingredient.service.IngredientNotFoundException
 import com.foodcost.ingredient.service.InvalidUnitException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
@@ -57,6 +58,17 @@ class GlobalExceptionHandler {
         ).also {
             it.type = URI.create("https://foodcost.app/errors/invalid-unit")
             it.title = "Unprocessable Entity"
+        }
+
+    @ExceptionHandler(IngredientNotFoundException::class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    fun handleIngredientNotFound(e: IngredientNotFoundException): ProblemDetail =
+        ProblemDetail.forStatusAndDetail(
+            HttpStatus.NOT_FOUND,
+            "Ingredient not found",
+        ).also {
+            it.type = URI.create("https://foodcost.app/errors/ingredient-not-found")
+            it.title = "Not Found"
         }
 
     @ExceptionHandler(MethodArgumentNotValidException::class)

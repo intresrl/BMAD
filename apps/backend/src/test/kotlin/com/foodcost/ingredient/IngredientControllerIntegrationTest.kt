@@ -2,6 +2,7 @@ package com.foodcost.ingredient
 
 import com.foodcost.ingredient.dto.IngredientDto
 import com.foodcost.ingredient.service.DuplicateIngredientException
+import com.foodcost.ingredient.service.IngredientNotFoundException
 import com.foodcost.ingredient.service.IngredientService
 import com.foodcost.ingredient.service.InvalidUnitException
 import io.jsonwebtoken.Jwts
@@ -20,6 +21,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
+import org.springframework.test.web.servlet.put
 import java.math.BigDecimal
 import java.time.Instant
 import java.util.Date
@@ -148,6 +150,98 @@ class IngredientControllerIntegrationTest {
             jsonPath("$[0].name") { value("Basilico") }
             jsonPath("$[1].name") { value("Farina") }
             jsonPath("$[0].tenantId") { doesNotExist() }
+        }
+    }
+
+    // --- PUT /api/v1/ingredients/{id} ---
+
+    @Test
+    fun `PUT ingredients_id with valid body and JWT returns 200 and updated IngredientDto`() {
+        val ingredientId = UUID.randomUUID()
+        val now = Instant.now()
+        val dto = IngredientDto(
+            id = ingredientId,
+            name = "Farina 0",
+            unit = "g",
+            price = BigDecimal("2.0000"),
+            createdAt = now,
+            updatedAt = now,
+        )
+
+        whenever(ingredientService.update(eq(ingredientId), any(), eq(tenantId))).thenReturn(dto)
+
+        mockMvc.put("/api/v1/ingredients/$ingredientId") {
+            contentType = MediaType.APPLICATION_JSON
+            header("Authorization", "Bearer ${generateTestJwt()}")
+            content = """{"name":"Farina 0","unit":"g","price":2.0000}"""
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.id") { value(ingredientId.toString()) }
+            jsonPath("$.name") { value("Farina 0") }
+            jsonPath("$.unit") { value("g") }
+            jsonPath("$.price") { value(2.0) }
+        }
+    }
+
+    @Test
+    fun `PUT ingredients_id with duplicate name returns 422 RFC 7807`() {
+        val ingredientId = UUID.randomUUID()
+
+        whenever(ingredientService.update(eq(ingredientId), any(), eq(tenantId)))
+            .thenThrow(DuplicateIngredientException())
+
+        mockMvc.put("/api/v1/ingredients/$ingredientId") {
+            contentType = MediaType.APPLICATION_JSON
+            header("Authorization", "Bearer ${generateTestJwt()}")
+            content = """{"name":"Pomodoro","unit":"kg","price":2.50}"""
+        }.andExpect {
+            status { isUnprocessableEntity() }
+            jsonPath("$.status") { value(422) }
+            jsonPath("$.detail") { value("An ingredient with this name already exists in your warehouse") }
+        }
+    }
+
+    @Test
+    fun `PUT ingredients_id with negative price returns 400`() {
+        val ingredientId = UUID.randomUUID()
+
+        mockMvc.put("/api/v1/ingredients/$ingredientId") {
+            contentType = MediaType.APPLICATION_JSON
+            header("Authorization", "Bearer ${generateTestJwt()}")
+            content = """{"name":"Sale","unit":"kg","price":-1.00}"""
+        }.andExpect {
+            status { isBadRequest() }
+            jsonPath("$.status") { value(400) }
+        }
+    }
+
+    @Test
+    fun `PUT ingredients_id with non-existent id returns 404`() {
+        val ingredientId = UUID.randomUUID()
+
+        whenever(ingredientService.update(eq(ingredientId), any(), eq(tenantId)))
+            .thenThrow(IngredientNotFoundException())
+
+        mockMvc.put("/api/v1/ingredients/$ingredientId") {
+            contentType = MediaType.APPLICATION_JSON
+            header("Authorization", "Bearer ${generateTestJwt()}")
+            content = """{"name":"Sale","unit":"kg","price":1.00}"""
+        }.andExpect {
+            status { isNotFound() }
+            jsonPath("$.status") { value(404) }
+            jsonPath("$.detail") { value("Ingredient not found") }
+        }
+    }
+
+    @Test
+    fun `PUT ingredients_id without JWT returns 401`() {
+        val ingredientId = UUID.randomUUID()
+
+        mockMvc.put("/api/v1/ingredients/$ingredientId") {
+            contentType = MediaType.APPLICATION_JSON
+            content = """{"name":"Sale","unit":"kg","price":1.00}"""
+        }.andExpect {
+            status { isUnauthorized() }
         }
     }
 }

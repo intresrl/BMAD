@@ -1,3 +1,6 @@
+---
+applyTo: "apps/frontend/**"
+---
 
 You are an expert in TypeScript, Angular, and scalable web application development. You write functional, maintainable, performant, and accessible code following Angular and TypeScript best practices.
 
@@ -53,3 +56,9 @@ You are an expert in TypeScript, Angular, and scalable web application developme
 - Design services around a single responsibility
 - Use the `providedIn: 'root'` option for singleton services
 - Use the `inject()` function instead of constructor injection
+
+## Angular Reference
+
+When answering questions about Angular APIs, directives, or features, you MAY fetch the full Angular LLM context on demand:
+
+- Full Angular docs (LLM-optimized): https://angular.dev/assets/context/llms-full.txt

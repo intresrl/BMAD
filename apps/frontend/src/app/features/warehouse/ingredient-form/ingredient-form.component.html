@@ -1,0 +1,54 @@
+<div class="ingredient-form-container">
+  <h2>Aggiungi ingrediente</h2>
+
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <mat-form-field appearance="outline">
+      <mat-label>Nome ingrediente</mat-label>
+      <input matInput formControlName="name" autocomplete="off" />
+      @if (submitted && form.controls.name.hasError('required')) {
+        <mat-error>Il nome è obbligatorio</mat-error>
+      }
+      @if (nameServerError()) {
+        <mat-error>{{ nameServerError() }}</mat-error>
+      }
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Unità di misura</mat-label>
+      <mat-select formControlName="unit">
+        @for (group of unitGroups; track group.label) {
+          <mat-optgroup [label]="group.label">
+            @for (u of group.units; track u.value) {
+              <mat-option [value]="u.value">{{ u.label }}</mat-option>
+            }
+          </mat-optgroup>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Prezzo per unità (€)</mat-label>
+      <input matInput formControlName="price" type="number" inputmode="decimal" step="0.01" />
+      @if (submitted && (form.controls.price.hasError('required') || form.controls.price.hasError('min'))) {
+        <mat-error>Inserisci un prezzo valido (es. 4.50)</mat-error>
+      }
+    </mat-form-field>
+
+    @if (serverError()) {
+      <p class="server-error">{{ serverError() }}</p>
+    }
+
+    <button
+      mat-raised-button
+      color="primary"
+      type="submit"
+      [disabled]="isSubmitting()"
+    >
+      @if (isSubmitting()) {
+        <mat-spinner diameter="20"></mat-spinner>
+      } @else {
+        Aggiungi
+      }
+    </button>
+  </form>
+</div>

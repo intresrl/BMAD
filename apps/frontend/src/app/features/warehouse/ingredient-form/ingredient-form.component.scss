@@ -1,0 +1,30 @@
+.ingredient-form-container {
+  padding: 1.5rem;
+
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 1.5rem;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .server-error {
+    color: var(--mat-sys-error, #b00020);
+    font-size: 0.875rem;
+    margin: 0;
+  }
+
+  button {
+    height: 48px;
+    margin-top: 0.5rem;
+
+    mat-spinner {
+      display: inline-block;
+    }
+  }
+}

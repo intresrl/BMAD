@@ -2,6 +2,8 @@ package com.foodcost.config
 
 import com.foodcost.auth.service.EmailAlreadyExistsException
 import com.foodcost.auth.service.InvalidCredentialsException
+import com.foodcost.ingredient.service.DuplicateIngredientException
+import com.foodcost.ingredient.service.InvalidUnitException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ProblemDetail
 import org.springframework.web.bind.MethodArgumentNotValidException
@@ -33,6 +35,28 @@ class GlobalExceptionHandler {
         ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Invalid credentials").also {
             it.type = URI.create("https://foodcost.app/errors/invalid-credentials")
             it.title = "Unauthorized"
+        }
+
+    @ExceptionHandler(DuplicateIngredientException::class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    fun handleDuplicateIngredient(e: DuplicateIngredientException): ProblemDetail =
+        ProblemDetail.forStatusAndDetail(
+            HttpStatus.UNPROCESSABLE_ENTITY,
+            "An ingredient with this name already exists in your warehouse",
+        ).also {
+            it.type = URI.create("https://foodcost.app/errors/duplicate-ingredient")
+            it.title = "Unprocessable Entity"
+        }
+
+    @ExceptionHandler(InvalidUnitException::class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    fun handleInvalidUnit(e: InvalidUnitException): ProblemDetail =
+        ProblemDetail.forStatusAndDetail(
+            HttpStatus.UNPROCESSABLE_ENTITY,
+            e.message ?: "Invalid unit of measure",
+        ).also {
+            it.type = URI.create("https://foodcost.app/errors/invalid-unit")
+            it.title = "Unprocessable Entity"
         }
 
     @ExceptionHandler(MethodArgumentNotValidException::class)

@@ -45,17 +45,17 @@ development_status:
   1-1-project-infrastructure-initialization: done
   1-2-user-registration: done
   1-3-user-login: done
-  1-3b-routing-bug-fixes: ready-for-dev
-  1-4-password-reset-via-email: backlog
-  1-5-trial-activation-subscription-plan-selection: backlog
-  1-6-self-service-plan-management: backlog
+  1-3b-routing-bug-fixes: done
+  1-4-password-reset-via-email: deferred # not needed for MVP
+  1-5-trial-activation-subscription-plan-selection: deferred # not needed for MVP
+  1-6-self-service-plan-management: deferred # not needed for MVP
   epic-1-retrospective: optional
 
   # Epic 2: Ingredient Warehouse
-  epic-2: backlog
-  2-1-add-ingredient-to-warehouse: backlog
-  2-2-view-warehouse-list: backlog
-  2-3-edit-ingredient-price-quantity-and-unit: backlog
+  epic-2: in-progress
+  2-1-add-ingredient-to-warehouse: done
+  2-2-view-warehouse-list: done # already covered by 2-1 implementation; virtual scroll deferred to when needed
+  2-3-edit-ingredient-price-quantity-and-unit: ready-for-dev
   2-4-organize-ingredients-by-category: backlog
   2-5-automatic-recipe-cost-propagation-on-price-change: backlog
   epic-2-retrospective: optional

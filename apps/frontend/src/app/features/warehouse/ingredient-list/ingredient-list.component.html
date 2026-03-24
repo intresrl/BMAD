@@ -1,0 +1,33 @@
+<div class="ingredient-list-container">
+  <div class="header">
+    <h1>Magazzino</h1>
+    @if (ingredients.value()?.length) {
+      <button mat-raised-button (click)="openAddForm()">Aggiungi ingrediente</button>
+    }
+  </div>
+
+  @if (ingredients.isLoading()) {
+    <div class="skeleton-row"></div>
+    <div class="skeleton-row"></div>
+    <div class="skeleton-row"></div>
+  } @else if (ingredients.error()) {
+    <div class="error-state">
+      <p>Errore nel caricamento degli ingredienti. Riprova più tardi.</p>
+    </div>
+  } @else if (ingredients.value()?.length === 0) {
+    <div class="empty-state">
+      <p>Nessun ingrediente ancora. Aggiungi il tuo primo ingrediente per iniziare a calcolare i costi.</p>
+      <button mat-stroked-button (click)="openAddForm()">Aggiungi ingrediente</button>
+    </div>
+  } @else {
+    <div class="ingredient-rows">
+      @for (ingredient of ingredients.value(); track ingredient.id) {
+        <div class="ingredient-row">
+          <span class="name">{{ ingredient.name }}</span>
+          <span class="unit">{{ ingredient.unit }}</span>
+          <span class="price tabular-nums">{{ ingredient.price | number:'1.2-4' }} €/{{ ingredient.unit }}</span>
+        </div>
+      }
+    </div>
+  }
+</div>
